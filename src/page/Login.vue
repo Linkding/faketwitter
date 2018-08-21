@@ -24,7 +24,7 @@
                 </div>
                 <div class="sub-area">
                     <div class="main">
-                        <div>首次使用Ftwitter吗？<span>现在注册</span> </div>
+                        <div>首次使用Ftwitter吗？<router-link to="/signup">现在注册</router-link></div>
                     </div>
                 </div>
             </div>
