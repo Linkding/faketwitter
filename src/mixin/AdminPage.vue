@@ -1,11 +1,11 @@
 <script>
 import Nav from "../components/Nav";
-// import Pagination from "../components/Pagination";
+import DropDown from "../components/DropDown";
 import AdminNav from "../components/AdminNav";
 import api from "../lib/api";
 
 export default {
-  components: { Nav, AdminNav},
+  components: { Nav, AdminNav, DropDown},
   data() {
     return {
       total: 0, //共计多少条数据

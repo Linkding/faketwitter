@@ -2,7 +2,7 @@
     <div class="side-nav">
         <div class="user-area">
             <div class="user-icon">
-                <img src="https://xavatar.imedao.com/community/20153/1428029125170-1428029138036.jpg!180x180.png" alt="">
+                <img :src="uinfo.avatar" alt="">
             </div>
             <div class="username">Linkding</div>
             <div class="user-data">
@@ -39,7 +39,13 @@
     </div>
 </template>
 <script>
+    import session from '../lib/session';
     export default {
+        data(){
+            return{
+                uinfo:session.uinfo(),
+            }
+        }
     }
 </script>
 <style scoped>

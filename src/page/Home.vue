@@ -7,37 +7,38 @@
             </div>
             <div class="col-tf-14">
                 <el-row class="card">
-                    <el-card>
+                    <el-card v-for="(item,index) in tweet">
                         <div class="col-tf-3 user-head">
-                            <img src="https://xavatar.imedao.com/community/20153/1428029125170-1428029138036.jpg!180x180.png" alt="">
+                            <img :src="uinfo.avatar" alt="">
                         </div>
                         <div class="col-tf-21">
                             <div class="l1">
-                                <span class="name">Stephen Curry</span>
+                                <span class="name">{{item.$user.username}}</span>
                                 <span class="count">@stephenCurry30</span>  
                                 <span class="time">. 1天</span>  
                             </div>
                             <div class="l2">
-                                hello world!
+                                {{item.content.text}}
                             </div>
                             <div class="l3">
-                                <img src="https://pbs.twimg.com/media/Dk116dPVAAEj93i.jpg" alt="">
+                                <img :src="item.content&&item.content.img?item.content.img:''" alt="">
                             </div>
                             <div class="l4">
                                 <span>
-                                    <Icon type="ios-chatboxes-outline" />
+                                    <!-- 评论 -->
+                                    <Icon size="20" type="ios-chatboxes-outline" />
                                     <span class="val">203</span>
                                 </span>
                                 <span>
-                                    <Icon type="ios-repeat" />
+                                    <Icon size="20" type="ios-repeat" />
                                     <span class="val">1k</span>
                                 </span>
                                 <span>
-                                    <Icon type="ios-heart-outline" />
+                                    <Icon size="20" type="ios-heart-outline" />
                                     <span class="val">1万</span>
                                 </span>
                                 <span>
-                                    <Icon type="ios-mail-outline" />
+                                    <Icon size="20" type="ios-mail-outline" />
                                 </span>
                             </div>
                         </div>
@@ -51,19 +52,32 @@
 <script>
     import Nav from '../components/Nav';
     import SideNav from '../components/SideNav';
+    import api from '../lib/api';
+    import session from '../lib/session';
     export default {
         components:{Nav,SideNav},
         data(){
             return{
                 tweet:{},
+                uinfo:session.uinfo(),
+                with:[
+                    {model:'user',relation:'has_one'},
+                ]
             }
+        },
+        mounted() {
+            this.read();
         },
         methods:{
             read(){
-                api('tweet/read')
-                    .then(r=>{
-                        this.tweet = r.data;
-                    })
+                api('tweet/read',{
+                    with:this.with,
+                })
+                .then(r=>{
+                    this.tweet = r.data;
+                    console.log('this.tweet',this.tweet);
+                    
+                })
             }
         }
     }
@@ -97,7 +111,7 @@
 }
 .card .l4>*{
     padding: 10px 0;
-    padding-right: 2rem;
+    padding-right: 3rem;
 }
 
 .card .l4>*:hover{
@@ -105,7 +119,6 @@
 }
 .card .l4 span >*{
     font-size: 1.5rem;
-    font-weight: 500;
 }
 .card .l4 .val {
     padding-left: 1rem;

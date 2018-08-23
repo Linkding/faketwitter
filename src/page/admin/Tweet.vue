@@ -7,35 +7,29 @@
             </div>
             <div class="col-lg-9">
                  <div class="wrapper">
-                        <h2>用户列表</h2>
+                        <h2>微博列表</h2>
                         <!-- <SearchBar :model="model" :isSearch="false" :onSubmit="search" :searchable="searchable"/> -->
                         <div class="tool-bar">
-                            <button @click="show_form= !show_form" class="btn"><span class="btn" v-if="show_form">收起</span><span v-else>创建用户</span></button>
+                            <button @click="show_form= !show_form" class="btn"><span class="btn" v-if="show_form">收起</span><span v-else>创建微博</span></button>
                         </div>
                         <form v-if="show_form" @submit="cou($event)">
                             <div class="input-control">
                                 <label>用户名</label>
-                                <input type="text" v-model="current.username">
+                                <DropDown 
+                                    :list="user" 
+                                    :showInput="true" 
+                                    :displayKey="'username'"
+                                    :Width="'200'"
+                                />
+                                <!-- <input type="text" v-model="current.user_id"> -->
                             </div>
                             <div class="input-control">
-                                <label>密码</label>
-                                <input type="password" v-model="current.password">
+                                <label>正文</label>
+                                <textarea v-model="current.content.text"></textarea>
                             </div>
                             <div class="input-control">
-                                <label>邮箱</label>
-                                <input type="text" v-model="current.email">
-                            </div>
-                            <div class="input-control">
-                                <label>电话</label>
-                                <input type="text" v-model="current.phone">
-                            </div>
-                            <div class="input-control">
-                                <label>地址</label>
-                                <input type="text" v-model="current.location">
-                            </div>
-                             <div class="input-control">
-                                <label>头像</label>
-                                <input type="text" v-model="current.avatar">
+                                <label>微博图片</label>
+                                <input type="file" @change="upload_file">
                             </div>
                             <div class="input-control">
                                 <button class="btn" type="submit">提交</button>
@@ -45,24 +39,18 @@
                         <div class="table">
                             <table>
                                 <thead>
-                                    <th>用户id</th>
-                                    <th>用户头像</th>
+                                    <th>微博id</th>
                                     <th>用户名</th>
-                                    <th>密码</th>
-                                    <th>邮箱</th>
-                                    <th>电话</th>
-                                    <th>地址</th>
+                                    <th>微博正文</th>
+                                    <th>微博图片</th>
                                     <th>操作</th>
                                 </thead>
                                 <tbody>
                                     <tr v-for="(row,index) in list" :key="index">
                                     <td>{{row.id}}</td>
-                                    <td><img :src="row.avatar?row.avatar:''" alt="" class="avatar"></td>
-                                    <td>{{row.username}}</td>
-                                    <td>{{row.password}}</td>
-                                    <td>{{row.email}}</td>
-                                    <td>{{row.phone}}</td>
-                                    <td>{{row.location}}</td>
+                                    <td>{{row.$user.username}}</td>
+                                    <td>{{row.content&&row.content.text?row.content.text:'-'}}</td>
+                                    <td><img :src="row.content&&row.content.img?row.content.img:''" alt="" class="img"></td>
                                     <td>
                                         <button @click="update(row)">编辑</button>
                                         <button @click="remove(row.id)">删除</button>
@@ -82,9 +70,32 @@
         mixins:[AdminPage],
         data(){
             return{
-                model:'user',
+                model:'tweet',
+                with:[
+                    {model:'user',relation:'has_one'},
+                ],
+                current:{
+                    content:{},
+                },
             }
         },
+        mounted() {
+            this.read_by_model('user')
+        },
+        methods:{
+             upload_file(e){
+                let file = e.target.files[0];
+                let fd = new FormData();
+                fd.append('file',file);
+                fd.append('name',file.name);
+                
+                api('_file/create',fd)
+                    .then(r=>{
+                        let data = r.data;
+                        this.current.content.img = 'http://' + data._base_url + '/' + data._key;
+                    })
+            },
+        }
     }
 </script>
 <style scoped>
@@ -94,13 +105,13 @@
 }
 .input-control button,
 button:hover {
-  background: #0b5a81;
+  background: #7FC7BD;
   color: #fff;
 }
 .input-control button {
   margin: 0px 10px;
 }
-.avatar {
+tbody .img {
     height: 100px;
 }
 </style>

@@ -26,6 +26,7 @@ import Signup from './page/Signup';
 
 import AdminBase from './page/admin/Base';
 import User from './page/admin/User';
+import Tweet from './page/admin/Tweet';
 
 import './css/global.css';
 const router = new VueRouter({
@@ -35,7 +36,8 @@ const router = new VueRouter({
     {path:"/signup",component:Signup,meta:{title:'注册|ftwitter'}},
     {path:"/admin",component:AdminBase,meta:{title:'后台|ftwitter'},
       children:[
-        {path:'user',component:User,meta:{title:'用户管理|ftwitter'}}
+        {path:'user',component:User,meta:{title:'用户管理|ftwitter'}},
+        {path:'tweet',component:Tweet,meta:{title:'微博管理|ftwitter'}}
       ]
     },
   ]

@@ -1,6 +1,7 @@
 <template>
     <div :style="{width:width}" class="nav-side">
         <router-link class="nav-item" to="/admin/user">用户管理</router-link>
+        <router-link class="nav-item" to="/admin/tweet">微博管理</router-link>
     </div>
 </template>
 
