@@ -53,6 +53,19 @@
     import SideNav from '../components/SideNav';
     export default {
         components:{Nav,SideNav},
+        data(){
+            return{
+                tweet:{},
+            }
+        },
+        methods:{
+            read(){
+                api('tweet/read')
+                    .then(r=>{
+                        this.tweet = r.data;
+                    })
+            }
+        }
     }
 </script>
 <style scoped>

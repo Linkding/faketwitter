@@ -22,5 +22,30 @@
                 },
             }
         }
-        api('MODEL/CREATE',model)
+        // api('MODEL/CREATE',model);
+
+        // api('MODEL/BIND', {
+        //   left      : 'user',
+        //   right     : 'user',
+        //   left_key  : 'follower_id',
+        //   right_key : 'target_id',
+        // });
+            
+        // api('user/bind',{
+        //     model:'user',
+        //     glue:{
+        //         4:5,
+        //     }
+        // })
+        api('user/read',{
+            with:[
+                [
+                    {
+                        model:'user',
+                        relation: 'belongs_to_many',
+                        only:['id'],
+                    },
+                ],
+            ],
+        })
     </script>

@@ -41,6 +41,7 @@
                         <div class="table">
                             <table>
                                 <thead>
+                                    <th>用户id</th>
                                     <th>用户名</th>
                                     <th>密码</th>
                                     <th>邮箱</th>
@@ -50,6 +51,7 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="(row,index) in list" :key="index">
+                                    <td>{{row.id}}</td>
                                     <td>{{row.username}}</td>
                                     <td>{{row.password}}</td>
                                     <td>{{row.email}}</td>

@@ -7,12 +7,13 @@
             <div  class="col-tf-16">
                 <div class="login-area">
                     <div class="title">登录 Ftwitter</div>
-                    <form>
+                    <form @submit.prevent="submit">
+                        <div v-if="login_fail" style="color:red">用户名或者密码错误</div>
                         <div>
-                            <input type="text" placeholder="手机、邮箱或者用户名">
+                            <input type="text" placeholder="手机、邮箱或者用户名" v-model="current.unique">
                         </div>
                         <div>
-                            <input type="password">
+                            <input type="password" placeholder="密码" v-model="current.password">
                         </div>
                         <div class="l3">
                             <button type="submit">登录</button>
@@ -35,9 +36,52 @@
 </template>
 <script>
     import Nav from '../components/Nav';
+    import session from '../lib/session.js';
+    import api from '../lib/api';
     export default {
         components:{
             Nav,
+        },
+        data(){
+            return{
+                current:{},
+                login_fail:false,
+            }
+        },
+        methods:{
+            submit(){
+                let unique = this.current.unique;
+                let password = this.current.password;
+
+                if(!unique || !password) return;
+
+                let query = [
+                    ['username','=',unique],
+                    ['email','=',unique],
+                    ['phone','=',unique],
+                ]
+                api('user/read',{
+                    where:{
+                        or: query,
+                    }
+                }).then(r=>{
+                    let row = r.data[0];
+
+                    if(!row || this.current.password != row.password){
+                        this.login_fail =true;
+                        return;
+                    };
+
+                    this.on_login_success(row);
+                })
+            },
+            on_login_success(row){
+                this.login_fail = false;
+                delete row.password;
+
+                session.login(row);
+                this.$router.push('/');
+            }
         }
     }
 </script>
