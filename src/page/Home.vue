@@ -9,7 +9,7 @@
                 <el-row class="card">
                     <el-card v-for="(item,index) in tweet">
                         <div class="col-tf-3 user-head">
-                            <img :src="uinfo.avatar" alt="">
+                            <img :src="item.$user.avatar" alt="">
                         </div>
                         <div class="col-tf-21">
                             <div class="l1">
@@ -24,8 +24,8 @@
                                 <img :src="item.content&&item.content.img?item.content.img:''" alt="">
                             </div>
                             <div class="l4">
-                                <span>
-                                    <!-- 评论 -->
+                                <span @click="show_comment(item.id)">
+                                    <!-- 评论icon -->
                                     <Icon size="20" type="ios-chatboxes-outline" />
                                     <span class="val">203</span>
                                 </span>
@@ -40,6 +40,99 @@
                                 <span>
                                     <Icon size="20" type="ios-mail-outline" />
                                 </span>
+                            </div>
+                            <div class="l5" v-if="comment_visible&&on_click_comment_tweet_id == item.id">
+                                <!-- 评论编辑框 -->
+                                <div class="comment-editor">
+                                    <div class="col-tf-3">
+                                        <img :src="uinfo.avatar" alt="">
+                                    </div>
+                                    <div class="col-tf-21">
+                                        <div class="r1">
+                                            <span>
+                                                <textarea  id="" cols="30" rows="10" v-model="comment.content"></textarea>
+                                            </span>
+                                        </div>
+                                        <div class="r2">
+                                            <div class="col-lg-6 icon-group">
+                                                <span><Icon size="15" type="md-images" /></span>
+                                                <span><Icon size="15" type="ios-link" /></span>
+                                                <span><Icon size="15" type="md-images" /></span>
+                                                <span class="">
+                                                    <input type="checkbox">同时转发
+                                                </span>
+                                            </div>
+                                            <div class="col-lg-6 right btn-group">
+                                                <button class="btn-cancel">取消</button>
+                                                <button class="btn-sub" @click="sub_comment(item.id)">提交</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 评论区 -->
+                                <div class="comment-list" v-if="comment_visible&&on_click_comment_tweet_id == item.id">
+                                    <div class="l1">
+                                        <div class="col-lg-6">全部评论</div>
+                                        <div class="col-lg-6 right">
+                                            <span>最近</span>
+                                            <span>最早</span>
+                                            <span>最赞</span>
+                                        </div>
+                                    </div>
+                                    <!-- 评论列表 -->
+                                    <div class="l2">
+                                        <div v-for="c in comment_list" class="comment-card">
+                                            <div class="col-tf-3">
+                                                <img :src="c.$user.avatar" alt="">
+                                            </div>
+                                            <div class="col-tf-21">
+                                                <div>
+                                                    <div class="col-lg-6 name">{{c.$user.username}}</div>
+                                                    <div class="col-lg-6 right">1分钟</div>
+                                                </div>
+                                                <div>{{c.content}}</div>
+                                                <div class="icon-group">
+                                                    <!-- 回复评论 -->
+                                                    <span @click="show_reply_comment(c.id)">
+                                                        <Icon size="15" type="ios-chatboxes-outline" />
+                                                        <span class="s-font">回复</span>
+                                                    </span>
+                                                    <!-- 点赞评论 -->
+                                                    <span>
+                                                        <Icon size="15" type="ios-thumbs-up-outline" />
+                                                        <span class="s-font">点赞</span>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="reply_comment" v-if="reply_comment_visible&&c.id == on_click_comment_id">
+                                                <div class="col-tf-3">
+                                                    <img :src="uinfo.avatar" alt="">
+                                                </div>
+                                                <div class="col-tf-21">
+                                                    <div class="r1">
+                                                        <span>
+                                                            <textarea  id="" cols="30" rows="10" v-model="comment.content"></textarea>
+                                                        </span>
+                                                    </div>
+                                                    <div class="r2">
+                                                        <div class="col-lg-6 icon-group">
+                                                            <span><Icon size="15" type="md-images" /></span>
+                                                            <span><Icon size="15" type="ios-link" /></span>
+                                                            <span><Icon size="15" type="md-images" /></span>
+                                                            <span class="">
+                                                                <input type="checkbox">同时转发
+                                                            </span>
+                                                        </div>
+                                                        <div class="col-lg-6 right btn-group">
+                                                            <button class="btn-cancel">取消</button>
+                                                            <button class="btn-sub" @click="sub_comment(item.id)">提交</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </el-card>
@@ -62,7 +155,13 @@
                 uinfo:session.uinfo(),
                 with:[
                     {model:'user',relation:'has_one'},
-                ]
+                ],
+                comment:{},
+                comment_list:[],
+                on_click_comment_tweet_id:'',//点击评论的微博id
+                on_click_comment_id:'',//点击回复的评论的id
+                comment_visible:false,
+                reply_comment_visible:false,
             }
         },
         mounted() {
@@ -76,17 +175,55 @@
                 .then(r=>{
                     this.tweet = r.data;
                     console.log('this.tweet',this.tweet);
-                    
                 })
+            },
+            sub_comment(tweet_id){
+                this.comment.user_id = this.uinfo.id;
+                this.comment.tweet_id = tweet_id;
+                api('comment/create',this.comment)
+                    .then(r=>{
+                        this.comment ={};
+                        this.read_comment(tweet_id);
+                    })
+            },
+            read_comment(tweet_id){
+                this.on_click_comment_tweet_id = tweet_id;
+                api('comment/read',{
+                    where:{
+                        tweet_id
+                    },
+                    with:[
+                        {model:'user',relation:'has_one'},
+                    ]
+                }).then(r=>{
+                    this.comment_list = r.data;
+                })
+            },
+            show_comment(id){
+                if(!this.comment_visible)
+                    this.read_comment(id)
+                this.comment_visible = !this.comment_visible;
+            },
+            show_reply_comment(id){
+                this.on_click_comment_id = id;
+                this.reply_comment_visible = !this.reply_comment_visible;                
             }
         }
     }
 </script>
 <style scoped>
-.user-head img{
+.user-head img,
+.card .l5 .comment-editor img,
+.card .comment-list .l2 img{
     border-radius: 50%;
+}
+.user-head img{
     width: 45px;
     height: 45px;
+}
+.card .l5 .comment-editor img,
+.card .comment-list .l2 img{
+    height: 30px;
 }
 .card {
     line-height: 2rem;
@@ -123,5 +260,62 @@
 .card .l4 .val {
     padding-left: 1rem;
     font-size: .9rem;
+}
+.card .l5 .comment-editor ,
+.card .comment-list .l2 .comment-card .reply_comment{
+    background: #F5F7F6;
+    padding: 20px 20px;
+}
+.card .l5 .comment-editor .r1 >*{
+    padding-right:10px;
+}
+.card .l5 .comment-editor textarea,
+.card .comment-list .l2 .comment-card .reply_comment textarea{
+    height: 40px;
+    width: 424px;
+    outline: none;
+    border: 1px solid rgba(0, 0, 0, .09)
+}
+.card .l5 .comment-editor .r2 .icon-group >*,
+.card .comment-list .l2 .comment-card .reply_comment .r2 .icon-group>*{
+    padding-right: 10px;
+}
+.card .l5 .comment-editor .r2 .icon-group [type="checkbox"],
+.card .comment-list .l2 .comment-card .reply_comment .r2 .icon-group [type="checkbox"]{
+    margin-top: 6px;
+}
+.card .l5 .comment-editor .r2 .btn-group button,
+.card .comment-list .l2 .comment-card .reply_comment .r2  .btn-group button{
+    padding: 3px 10px;
+}
+.card .l5 .comment-editor .r2 .btn-cancel,
+.card .comment-list .l2 .comment-card .reply_comment .r2 .btn-cancel{
+    border: 0;
+    background: 0;
+}
+.card .l5 .comment-editor .r2 .btn-sub,
+.card .comment-list .l2 .comment-card .reply_comment .r2 .btn-sub{
+    background: #4CB6C2;
+    color: #fff;
+    border-radius: 5px;
+}
+.card .l5  .comment-list .l1 {
+    padding: 10px 0 ;
+    border-bottom: 1px solid rgba(0, 0, 0, .09);
+}
+.card .l5  .comment-list .l2 .comment-card{
+    border-bottom: 1px solid rgba(0, 0, 0, .09);
+    padding: 9px 0;
+}
+.card .l5  .comment-list .l2 .comment-card .name{
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+.card .l5  .comment-list .l2 .comment-card .icon-group>*{
+    padding-right: 18px;
+}
+.card .l5  .comment-list .l2 .comment-card .s-font{
+    font-size: 0.9rem;
+    padding-left: 5px;
 }
 </style>
