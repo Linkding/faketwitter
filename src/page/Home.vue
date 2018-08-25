@@ -90,7 +90,12 @@
                                                     <div class="col-lg-6 name">{{c.$user.username}}</div>
                                                     <div class="col-lg-6 right">1分钟</div>
                                                 </div>
-                                                <div>{{c.content}}</div>
+                                                <!-- 引述回复的评论 -->
+                                                <div class="reply_to l-font" v-if="c.$comment">
+                                                    <span>@{{c.$comment&&c.$comment[0].user_id}}:</span>
+                                                    <span>{{c.$comment&&c.$comment[0].content}}</span>
+                                                </div>
+                                                <div class="l-font">{{c.content}}</div>
                                                 <div class="icon-group">
                                                     <!-- 回复评论 -->
                                                     <span @click="show_reply_comment(c.id)">
@@ -104,6 +109,7 @@
                                                     </span>
                                                 </div>
                                             </div>
+                                            <!-- 回复评论表单框 -->
                                             <div class="reply_comment" v-if="reply_comment_visible&&c.id == on_click_comment_id">
                                                 <div class="col-tf-3">
                                                     <img :src="uinfo.avatar" alt="">
@@ -111,7 +117,7 @@
                                                 <div class="col-tf-21">
                                                     <div class="r1">
                                                         <span>
-                                                            <textarea  id="" cols="30" rows="10" v-model="comment.content"></textarea>
+                                                            <textarea  id="" cols="30" rows="10" v-model="reply_comment.content"></textarea>
                                                         </span>
                                                     </div>
                                                     <div class="r2">
@@ -125,7 +131,7 @@
                                                         </div>
                                                         <div class="col-lg-6 right btn-group">
                                                             <button class="btn-cancel">取消</button>
-                                                            <button class="btn-sub" @click="sub_comment(item.id)">提交</button>
+                                                            <button class="btn-sub" @click="sub_reply_comment()">提交</button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -156,7 +162,8 @@
                 with:[
                     {model:'user',relation:'has_one'},
                 ],
-                comment:{},
+                comment:{},//评论
+                reply_comment:{},//回复评论
                 comment_list:[],
                 on_click_comment_tweet_id:'',//点击评论的微博id
                 on_click_comment_id:'',//点击回复的评论的id
@@ -186,14 +193,42 @@
                         this.read_comment(tweet_id);
                     })
             },
+            sub_reply_comment(){
+                this.reply_comment.user_id = this.uinfo.id;
+                this.reply_comment.tweet_id = this.on_click_comment_tweet_id;
+                this.reply_comment.reply_id = this.on_click_comment_id;
+                api('comment/create',this.reply_comment)
+                    .then(r=>{
+                        let l_id = r.data.id;
+                        let r_id = r.data.reply_id;
+                        this.glue_reply_comment(l_id,r_id);
+                        this.reply_comment_visible = false;
+                        this.read_comment(this.on_click_comment_tweet_id);
+                    })
+            },
+            glue_reply_comment(l_id,r_id){
+                api('comment/bind',{
+                            model:'comment',
+                            glue:{
+                                [l_id]:r_id, 
+                            }
+                        })
+            },
             read_comment(tweet_id){
                 this.on_click_comment_tweet_id = tweet_id;
                 api('comment/read',{
                     where:{
-                        tweet_id
+                        tweet_id,
                     },
                     with:[
                         {model:'user',relation:'has_one'},
+                        // {model:'comment',relation:'has_one'},
+                        
+                        [
+                            {model:'user',relation:'has_one'},
+                            {model:'comment',relation:'belongs_to_many'},
+                        ],
+                        
                     ]
                 }).then(r=>{
                     this.comment_list = r.data;
@@ -205,7 +240,8 @@
                 this.comment_visible = !this.comment_visible;
             },
             show_reply_comment(id){
-                this.on_click_comment_id = id;
+                if(!this.reply_comment_visible)
+                    this.on_click_comment_id = id;
                 this.reply_comment_visible = !this.reply_comment_visible;                
             }
         }
@@ -317,5 +353,13 @@
 .card .l5  .comment-list .l2 .comment-card .s-font{
     font-size: 0.9rem;
     padding-left: 5px;
+}
+.card .l5  .comment-list .l2 .reply_to {
+    background: #F0F0F0;
+    padding: 8px;
+    /* font-size: 1.1rem; */
+}
+.card .l5  .comment-list .l2 .reply_to >* {
+    padding-right: 1rem; 
 }
 </style>

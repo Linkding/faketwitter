@@ -18,5 +18,12 @@
             }
         }
     }
-    api('MODEL/CREATE',model);
+    // api('MODEL/CREATE',model);
+    // api('MODEL/BIND', {
+    //       left      : 'comment',
+    //       right     : 'comment',
+    //       left_key  : 'replier_id',
+    //       right_key : 'target_id',
+    //     });
+    api('comment/delete_many',{in:[8,9]})
 </script>
