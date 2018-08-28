@@ -30,22 +30,33 @@
         //   left_key  : 'follower_id',
         //   right_key : 'target_id',
         // });
-            
+        
+        //绑定点赞关系
+         api('MODEL/BIND', {  
+          left      : 'user',
+          right     : 'tweet',
+          left_key  : 'user_id',
+          right_key : 'tweet_id',
+        });
+        //  api('MODEL/UNBIND',{
+        //     left:'tweet',
+        //     right:'user',
+        //  })   
         // api('user/bind',{
         //     model:'user',
         //     glue:{
         //         4:5,
         //     }
         // })
-        api('user/read',{
-            with:[
-                [
-                    {
-                        model:'user',
-                        relation: 'belongs_to_many',
-                        // only:['id'],
-                    },
-                ],
-            ],
-        })
+        // api('user/read',{
+        //     with:[
+        //         [
+        //             {
+        //                 model:'user',
+        //                 relation: 'belongs_to_many',
+        //                 // only:['id'],
+        //             },
+        //         ],
+        //     ],
+        // })
     </script>

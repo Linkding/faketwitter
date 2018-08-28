@@ -33,8 +33,9 @@
                                     <Icon size="20" type="ios-repeat" />
                                     <span class="val">1k</span>
                                 </span>
-                                <span>
-                                    <Icon size="20" type="ios-heart-outline" />
+                                <!-- 点赞微博 -->
+                                <span @click="toggle_like(item.id)" >
+                                    <Icon size="20" type="ios-heart-outline" :color="isLiked(item.id)?'#4CB6C2':''"/>
                                     <span class="val">1万</span>
                                 </span>
                                 <span>
@@ -92,8 +93,8 @@
                                                 </div>
                                                 <!-- 引述回复的评论 -->
                                                 <div class="reply_to l-font" v-if="c.$comment">
-                                                    <span>@{{c.$comment&&c.$comment[0].user_id}}:</span>
-                                                    <span>{{c.$comment&&c.$comment[0].content}}</span>
+                                                    <span>@{{c.$comment&&c.$comment.user_id}}:</span>
+                                                    <span>{{c.$comment&&c.$comment.content}}</span>
                                                 </div>
                                                 <div class="l-font">{{c.content}}</div>
                                                 <div class="icon-group">
@@ -169,19 +170,28 @@
                 on_click_comment_id:'',//点击回复的评论的id
                 comment_visible:false,
                 reply_comment_visible:false,
+                liked_list:[],//点赞list
+                
             }
         },
         mounted() {
             this.read();
+            this.read_liked(this.uinfo.id);
         },
         methods:{
+            isLiked(id){
+                let liked_list = this.liked_list;
+                if(liked_list.indexOf(id) == -1)
+                    return false;
+                return true;
+            },
             read(){
                 api('tweet/read',{
-                    with:this.with,
-                })
-                .then(r=>{
+                    with:[
+                        {model:'user',relation:'has_one'},
+                    ],
+                }).then(r=>{
                     this.tweet = r.data;
-                    console.log('this.tweet',this.tweet);
                 })
             },
             sub_comment(tweet_id){
@@ -199,9 +209,9 @@
                 this.reply_comment.reply_id = this.on_click_comment_id;
                 api('comment/create',this.reply_comment)
                     .then(r=>{
-                        let l_id = r.data.id;
-                        let r_id = r.data.reply_id;
-                        this.glue_reply_comment(l_id,r_id);
+                        // let l_id = r.data.id;
+                        // let r_id = r.data.reply_id;
+                        // this.glue_reply_comment(l_id,r_id);
                         this.reply_comment_visible = false;
                         this.read_comment(this.on_click_comment_tweet_id);
                     })
@@ -222,12 +232,12 @@
                     },
                     with:[
                         {model:'user',relation:'has_one'},
-                        // {model:'comment',relation:'has_one'},
+                        {model:'comment',relation:'has_one',foreign_key:'reply_id'},
                         
-                        [
-                            {model:'user',relation:'has_one'},
-                            {model:'comment',relation:'belongs_to_many'},
-                        ],
+                        // [
+                        //     {model:'user',relation:'has_one'},
+                        //     {model:'comment',relation:'belongs_to_many'},
+                        // ],
                         
                     ]
                 }).then(r=>{
@@ -243,11 +253,55 @@
                 if(!this.reply_comment_visible)
                     this.on_click_comment_id = id;
                 this.reply_comment_visible = !this.reply_comment_visible;                
+            },
+            toggle_like(tweet_id){
+                api('_bind__tweet_user/read',{
+                    where:{
+                        and:{tweet_id:tweet_id,user_id:this.uinfo.id}
+                    }
+                }).then(r=>{
+                    if(r.data){
+                        api('user/unbind',{
+                            model:'tweet',
+                            glue:{
+                                [this.uinfo.id]:tweet_id,
+                            }
+                        }).then(r=>{
+                            // let ind = this.liked_list.indexOf(tweet_id);
+                            // this.liked_list.splice(ind,0);
+                            // console.log('this.liked_list',this.liked_list);
+                            this.read_liked(this.uinfo.id);
+                        });
+                    }else{
+                        api('user/bind',{
+                            model:'tweet',
+                            glue:{
+                                [this.uinfo.id]:tweet_id,
+                            }
+                        }).then(r=>{
+                            // this.liked_list.push(tweet_id);
+                            this.read_liked(this.uinfo.id);
+                        })
+                    }
+                })
+            },
+            read_liked(uid){
+                this.liked_list = [];
+                api('_bind__tweet_user/read',{where:{user_id:uid},only:['tweet_id']})
+                    .then(r=>{
+                        r.data.filter((like)=>{
+                            this.liked_list.push(like.tweet_id)
+                        })
+                        console.log('this.liked_list',this.liked_list);
+                })
             }
         }
     }
 </script>
 <style scoped>
+.active{
+    background: red;
+}
 .user-head img,
 .card .l5 .comment-editor img,
 .card .comment-list .l2 img{
