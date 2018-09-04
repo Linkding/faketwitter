@@ -20,8 +20,9 @@
                                     :showInput="true" 
                                     :displayKey="'username'"
                                     :Width="'200'"
+                                    :onSelect="set_user_id"
+                                    ref="edit_tweet"
                                 />
-                                <!-- <input type="text" v-model="current.user_id"> -->
                             </div>
                             <div class="input-control">
                                 <label>正文</label>
@@ -29,7 +30,7 @@
                             </div>
                             <div class="input-control">
                                 <label>微博图片</label>
-                                <input type="file" @change="upload_file">
+                                <input type="file" @change="upload_file($event)">
                             </div>
                             <div class="input-control">
                                 <button class="btn" type="submit">提交</button>
@@ -47,14 +48,14 @@
                                 </thead>
                                 <tbody>
                                     <tr v-for="(row,index) in list" :key="index">
-                                    <td>{{row.id}}</td>
-                                    <td>{{row.$user.username}}</td>
-                                    <td>{{row.content&&row.content.text?row.content.text:'-'}}</td>
-                                    <td><img :src="row.content&&row.content.img?row.content.img:''" alt="" class="img"></td>
-                                    <td>
-                                        <button @click="update(row)">编辑</button>
-                                        <button @click="remove(row.id)">删除</button>
-                                    </td>
+                                        <td>{{row.id}}</td>
+                                        <td>{{row.$user&&row.$user.username||'-'}}</td>
+                                        <td>{{row.content&&row.content.text||'-'}}</td>
+                                        <td><img :src="row.content&&row.content.img?row.content.img:''" alt="" class="img"></td>
+                                        <td>
+                                            <button @click="update(row)">编辑</button>
+                                            <button @click="remove(row.id)">删除</button>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -66,11 +67,16 @@
 </template>
 <script>
     import AdminPage from '../../mixin/AdminPage';
+    import api from '../../lib/api';
+    import session from '../../lib/session';
+    
     export default {
         mixins:[AdminPage],
+        created() {
+            this.model = 'tweet'
+        },
         data(){
             return{
-                model:'tweet',
                 with:[
                     {model:'user',relation:'has_one'},
                 ],
@@ -95,6 +101,10 @@
                         this.current.content.img = 'http://' + data._base_url + '/' + data._key;
                     })
             },
+            set_user_id(row){
+                this.current.user_id = row.id;
+            },
+
         }
     }
 </script>

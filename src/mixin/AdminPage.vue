@@ -53,7 +53,7 @@ export default {
       let action = this.current.id ? "update" : "create";
       api(`${this.model}/${action}`, this.current).then(r => {
         this.read(this.current_page);
-        this.current = {};
+        this.init_current();
       });
     },
     remove(id) {
@@ -63,35 +63,40 @@ export default {
     },
     update(row) {
       this.current = row;
+      // this.current.content.img = row.content.img
       this.show_form = true;
 
       this.$nextTick(() => {
-        if(this.model == 'product'){
-          this.edit_product(row)          
+        if(this.model == 'tweet'){
+          this.edit_tweet(row)         
         }
-        else if(this.model == 'model'){
-          this.edit_model(row);
-        }else if(this.model == 'report'){
-          this.edit_report(row);
-        }
+        // else if(this.model == 'model'){
+        //   this.edit_model(row);
+        // }else if(this.model == 'report'){
+        //   this.edit_report(row);
+        // }
       });
     },
-    edit_product(row) {
-      this.$refs.edit_product_breed.on_edit_product(row.$breed);
-      this.$refs.edit_product_location.on_edit_product(row.$location);
-      this.$refs.edit_product_occasion.on_edit_product(row.$occasion);
-      this.$refs.edit_product_ptype.on_edit_product(row.$ptype);
+    // edit_product(row) {
+    //   this.$refs.edit_product_breed.on_edit_product(row.$breed);
+    //   this.$refs.edit_product_location.on_edit_product(row.$location);
+    //   this.$refs.edit_product_occasion.on_edit_product(row.$occasion);
+    //   this.$refs.edit_product_ptype.on_edit_product(row.$ptype);
+    // },
+    // edit_vehicle(row) {
+    //   this.$refs.edit_vehicle_brand.on_edit_vehicle(row.$brand);
+    //   this.$refs.edit_vehicle_model.on_edit_vehicle(row.$model);
+    //   this.$refs.edit_vehicle_design.on_edit_vehicle(row.$design);
+    // },
+    edit_tweet(row){
+      this.$refs.edit_tweet.on_edit_tweet(row.$user);
     },
-    edit_vehicle(row) {
-      this.$refs.edit_vehicle_brand.on_edit_vehicle(row.$brand);
-      this.$refs.edit_vehicle_model.on_edit_vehicle(row.$model);
-      this.$refs.edit_vehicle_design.on_edit_vehicle(row.$design);
+    init_current(){
+      this.current = {};
+      this.current.content = {};
     },
-    edit_report(row){
-      this.$refs.edit_report.on_edit_report(row.$vehicle);
-    },
-    cancel() {
-      this.current = {preview:[]};
+    cancel(){
+      this.init_current();
       this.show_form = false;
     },
     search(keyword) {

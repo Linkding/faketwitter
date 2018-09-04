@@ -69,25 +69,28 @@ export default {
       };
     },
     //触发product模块编辑事件时调用
-    on_edit_product(row) {
-      if (!row || row == null || row == undefined) {
-        this.selected = {};
-        this.keyword = '';
-      }else{
-        this.keyword = row[this.displayKey];
-        this.selected = row;
-      }
-    },
-    //触发vehicle模块编辑事件时调用
-    on_edit_vehicle(row) {
+    // on_edit_product(row) {
+    //   if (!row || row == null || row == undefined) {
+    //     this.selected = {};
+    //     this.keyword = '';
+    //   }else{
+    //     this.keyword = row[this.displayKey];
+    //     this.selected = row;
+    //   }
+    // },
+    //触发tweet模块编辑事件时调用
+    on_edit_tweet(row) {
+      console.log('row',row);
+      
       if (!row) this.selected = {};
       this.selected = row;
+      this.keyword = row.username;
     },
     //触发report模块编辑事件时调用
-    on_edit_report(row){
-      if(!row) this.selected = {};
-      this.selected = row;
-    },
+    // on_edit_report(row){
+    //   if(!row) this.selected = {};
+    //   this.selected = row;
+    // },
     set_default() {
       //点击编辑事件，选择一个默认的选项
       //不交互传参
@@ -143,7 +146,6 @@ export default {
     let list = this.list;
 
     list && (this.result = this.list); //为什么要用result引用list
-    console.log('this.result',this.result);
     
   },
   watch: {

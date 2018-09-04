@@ -7,9 +7,11 @@
             </div>
             <div class="col-tf-14">
                 <el-row class="card">
-                    <el-card v-for="(item,index) in tweet">
+                    <el-card v-for="(item,index) in timeline">
                         <div class="col-tf-3 user-head">
-                            <img :src="item.$user.avatar" alt="">
+                            <router-link :to="'user/' + item.$user.id">
+                                <img :src="item.$user.avatar" alt="">
+                            </router-link>
                         </div>
                         <div class="col-tf-21">
                             <div class="l1">
@@ -20,26 +22,26 @@
                             <div class="l2">
                                 {{item.content.text}}
                             </div>
-                            <div class="l3">
+                            <div class="l3" v-if="item.content&&item.content.img">
                                 <img :src="item.content&&item.content.img?item.content.img:''" alt="">
                             </div>
                             <div class="l4">
                                 <span @click="show_comment(item.id)">
                                     <!-- 评论icon -->
-                                    <Icon size="20" type="ios-chatboxes-outline" />
+                                    <!-- <Icon size="20" type="ios-chatboxes" color="#c4c4c4"/> -->
+                                    <Icon size="20" type="ios-chatboxes-outline" color="#969696"/>
                                     <span class="val">203</span>
                                 </span>
                                 <span>
-                                    <Icon size="20" type="ios-repeat" />
+                                    <!-- <Icon size="20" type="md-repeat" color="#969696" /> -->
+                                    <Icon type="ios-repeat" size="25" color="#969696" />
                                     <span class="val">1k</span>
                                 </span>
                                 <!-- 点赞微博 -->
                                 <span @click="toggle_like(item.id)" >
-                                    <Icon size="20" type="ios-heart-outline" :color="isLiked(item.id)?'#4CB6C2':''"/>
+                                    <Icon v-if="isLiked(item.id)" size="20" type="ios-heart" color="#4CB6C2"/>
+                                    <Icon v-else size="20" type="ios-heart-outline" color="#969696"/>
                                     <span class="val">1万</span>
-                                </span>
-                                <span>
-                                    <Icon size="20" type="ios-mail-outline" />
                                 </span>
                             </div>
                             <div class="l5" v-if="comment_visible&&on_click_comment_tweet_id == item.id">
@@ -145,7 +147,24 @@
                     </el-card>
                 </el-row>
             </div>
-            <div class="col-tf-6"></div>
+            <div class="col-tf-6 r-wrap">
+                <div class="l1">
+                    <div class="col-lg-6 l-font">用户推荐</div>
+                    <div class="col-lg-6 m-font right">换一批</div>
+                </div>
+                <el-card v-for="it in explore_user">
+                    <div class="col-tf-4 user-head" >
+                        <img :src="it.avatar" alt="">
+                    </div>
+                    <div class="col-tf-16">
+                        <div class="username">{{it.username}}</div>
+                    </div>
+                    <div class="col-tf-4">
+                        <button v-if="it.focused" class="btn">取消关注</button>
+                        <button v-else class="btn">+</button>
+                    </div>
+                </el-card>
+            </div>
         </div>
     </div>
 </template>
@@ -154,11 +173,13 @@
     import SideNav from '../components/SideNav';
     import api from '../lib/api';
     import session from '../lib/session';
+    import util from '../lib/util';
     export default {
         components:{Nav,SideNav},
         data(){
             return{
-                tweet:{},
+                current:{},//获取当前用户的所有信息
+                timeline:{},//微博列表
                 uinfo:session.uinfo(),
                 with:[
                     {model:'user',relation:'has_one'},
@@ -171,28 +192,77 @@
                 comment_visible:false,
                 reply_comment_visible:false,
                 liked_list:[],//点赞list
-                
+                followed_list:[],//关注者list
+                all_user:[],//所有用户
+                explore_user:[],//除本地用户外的用户
             }
         },
         mounted() {
             this.read();
             this.read_liked(this.uinfo.id);
+            this.read_followed();
+            this.read_all_user();
+            this.read_explore_user();
         },
         methods:{
+            read(){
+                api('user/read',{
+                    where:{id:this.uinfo.id}    
+                }).then(r=>{
+                    this.current = r.data[0];
+                })
+            },
+            read_all_user(){
+                api('user/read').then(r=>{
+                    this.all_user = r.data;
+                })
+            },
+            read_explore_user(){
+                api('user/read',{
+                    where:[
+                        ['id','!=',this.uinfo.id]
+                    ],
+                    limit:8
+                }).then(r=>{
+                    this.explore_user = r.data;
+                })
+            },
+            read_followed(){
+                return api('user/find',{
+                    id:this.uinfo.id,
+                    with:[
+                        {
+                            model:'user',
+                            relation:'belongs_to_many',
+                        }
+                    ],
+                }).then(r=>{
+                    this.followed_list = r.data.$user || [];
+                }).then(()=>{
+                    this.read_timeline();
+                    // this.read_comment();
+                })
+            },
+            read_timeline(){
+                //本人微博也加入到时间线中
+                this.followed_list.push(this.current)
+                api('tweet/read',{
+                    where:[
+                        ['user_id','in',util.pluck(this.followed_list,'id')]
+                    ],
+                    with:[
+                        {model:'user',relation:'has_one'},
+                    ]
+                }).then(r=>{
+                    this.timeline = r.data;
+
+                })
+            },
             isLiked(id){
                 let liked_list = this.liked_list;
                 if(liked_list.indexOf(id) == -1)
                     return false;
                 return true;
-            },
-            read(){
-                api('tweet/read',{
-                    with:[
-                        {model:'user',relation:'has_one'},
-                    ],
-                }).then(r=>{
-                    this.tweet = r.data;
-                })
             },
             sub_comment(tweet_id){
                 this.comment.user_id = this.uinfo.id;
@@ -294,7 +364,8 @@
                         })
                         console.log('this.liked_list',this.liked_list);
                 })
-            }
+            },
+           
         }
     }
 </script>
@@ -415,5 +486,12 @@
 }
 .card .l5  .comment-list .l2 .reply_to >* {
     padding-right: 1rem; 
+}
+.r-wrap .l1 {
+    padding: 8px;
+}
+.r-wrap .username {
+    padding-left: 15px;
+    font-weight: bold;
 }
 </style>
